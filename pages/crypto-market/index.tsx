@@ -16,7 +16,8 @@ import {
   Button,
 } from "@chakra-ui/react";
 import Layout from "../../components/Layout";
-import { useQuery } from "react-query";
+import { QueryClient, useQuery } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 type Price = {
   id: string;
@@ -27,6 +28,10 @@ type Price = {
   price_change_percentage_24h: number;
   total_supply: number;
   market_cap: number;
+};
+
+type PageProps = {
+  initialPrice: Price[];
 };
 
 function formatNumber(num: number) {
@@ -62,6 +67,27 @@ const Percentage = ({ percent }: { percent: number }) => {
   return <Text color={defaultColor}>{formatPercent(percent)}</Text>;
 };
 
+// SSR Initial Data
+// export async function getStaticProps() {
+//   const initialPrice = await getMarket();
+//   return {
+//     props: {
+//       initialPrice,
+//     },
+//   };
+// }
+
+// SSR with Hydrate
+export async function getServerSideProps() {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery(["market", 1], () => getMarket());
+  return {
+    props: {
+      dehydratedState: dehydrate(queryClient),
+    },
+  };
+}
+
 export default function Market() {
   //queryKey is identifier,
   //queryFn will return Promise
@@ -72,18 +98,14 @@ export default function Market() {
     {
       staleTime: 3000,
       refetchInterval: 3000,
+      // initialData: initialPrice,
     }
   );
 
   return (
     <Layout title="Crypto Market">
       {isFetching && (
-        <Spinner
-          color="blue.500"
-          position="fixed"
-          top={10}
-          right={200}
-        ></Spinner>
+        <Spinner color="blue.500" position="fixed" top={10} right={200} />
       )}
       <Table variant="simple">
         <Thead>
