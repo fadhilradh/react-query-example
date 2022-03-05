@@ -18,10 +18,66 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import Layout from "../../components/Layout";
+import { useMutation, useQuery } from "react-query";
+import MamaTable from "./MamaTable";
+import { useForm } from "react-hook-form";
+
+export function formatDate(date: string | undefined) {
+  return new Date(date).toLocaleString("id-Id");
+}
+
+async function fetchMessage() {
+  const URL = "http://localhost:3000/api/message";
+  const response = await fetch(URL);
+
+  if (!response.ok) {
+    throw new Error("get market error");
+  }
+
+  return await response.json();
+}
+
+export type MessageProps = {
+  id?: number;
+  createdAt?: string;
+  phoneNumber: number;
+  message: string;
+  status?: string;
+};
+
+async function submitMsg(data: MessageProps) {
+  const URL = "http://localhost:3000/api/message";
+  const response = await fetch(URL, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error occured");
+  }
+
+  return await response.json();
+}
 
 export default function MamaMuda() {
+  const { data, isSuccess } = useQuery("getMamaMessage", fetchMessage, {
+    staleTime: 5000,
+    refetchInterval: 5000,
+  });
+
+  const mutation = useMutation(submitMsg, {
+    // onError,
+    // onMutate,
+    // onSettled,
+  });
+
+  const { handleSubmit, errors, register, reset, clearErrors } = useForm();
+
+  async function onSubmit(data: MessageProps) {
+    await mutation.mutate(data);
+  }
   return (
-    <Layout title="💌 Mama Muda" subTitle="Minta Pulsa">
+    <Layout title="💌 Mama Minta Pulsa" subTitle="10 jt aja">
       <Flex>
         <Box>
           <Box
@@ -43,7 +99,7 @@ export default function MamaMuda() {
               ✍️ Request Pulsa
             </Text>
             <form>
-              <FormControl pb={4}>
+              <FormControl pb={4} isInvalid={errors.phoneNumber ? true : false}>
                 <FormLabel
                   htmlFor="phoneNumber"
                   fontWeight="bold"
@@ -53,11 +109,19 @@ export default function MamaMuda() {
                 >
                   Phone Number
                 </FormLabel>
-                <Input name="phoneNumber" placeholder="Phone Number" />
-                <FormErrorMessage></FormErrorMessage>
+                <Input
+                  name="phoneNumber"
+                  placeholder="Phone Number"
+                  ref={register({
+                    required: "Phone Number Required",
+                  })}
+                />
+                <FormErrorMessage>
+                  {errors.phoneNumber && errors.phoneNumber.message}
+                </FormErrorMessage>
               </FormControl>
 
-              <FormControl>
+              <FormControl isInvalid={errors.phoneNumber ? true : false}>
                 <FormLabel
                   htmlFor="name"
                   fontWeight="bold"
@@ -67,80 +131,30 @@ export default function MamaMuda() {
                 >
                   Message
                 </FormLabel>
-                <Textarea placeholder="Bullshit Message" />
-                <FormErrorMessage></FormErrorMessage>
+                <Textarea
+                  name="message"
+                  placeholder="Bullshit Message"
+                  ref={register({
+                    required: "Message is Required",
+                  })}
+                />
+                <FormErrorMessage>
+                  {errors.message && errors.message.message}
+                </FormErrorMessage>
               </FormControl>
 
-              <Button mt={4} colorScheme="teal" type="submit">
+              <Button
+                mt={4}
+                colorScheme="teal"
+                type="submit"
+                onClick={handleSubmit(onSubmit)}
+              >
                 Send
               </Button>
             </form>
           </Box>
         </Box>
-        <Box flex="1">
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>Date</Th>
-                <Th>Phone Number</Th>
-                <Th>Message</Th>
-                <Th>Status</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              <Tr>
-                <Td>1/1/2021</Td>
-                <Td>085267852222</Td>
-                <Td>
-                  Mama lagi di kantor polisi, kirim pulsa 10jt sekarang. CEPAT !
-                </Td>
-                <Td>
-                  <Badge colorScheme="yellow">waiting</Badge>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>1/1/2021</Td>
-                <Td>085267852333</Td>
-                <Td>
-                  Mama lagi di kantor lurah, kirim pulsa 20jt sekarang. CEPAT !
-                </Td>
-                <Td>
-                  <Badge colorScheme="green">success</Badge>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>1/1/2021</Td>
-                <Td>085267852444</Td>
-                <Td>
-                  Mama lagi di mana mana, kirim pulsa 30jt sekarang. CEPAT !
-                </Td>
-                <Td>
-                  <Badge colorScheme="red">failed</Badge>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>1/1/2021</Td>
-                <Td>085267852444</Td>
-                <Td>
-                  Mama lagi di mana mana, kirim pulsa 30jt sekarang. CEPAT !
-                </Td>
-                <Td>
-                  <Badge colorScheme="red">failed</Badge>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>1/1/2021</Td>
-                <Td>085267852444</Td>
-                <Td>
-                  Mama lagi di mana mana, kirim pulsa 30jt sekarang. CEPAT !
-                </Td>
-                <Td>
-                  <Badge colorScheme="red">failed</Badge>
-                </Td>
-              </Tr>
-            </Tbody>
-          </Table>
-        </Box>
+        <Box flex="1">{isSuccess && <MamaTable data={data} />}</Box>
       </Flex>
     </Layout>
   );

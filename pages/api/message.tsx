@@ -17,6 +17,7 @@ interface MessageStatus {
 let messages: Message[] = [];
 
 function addMessage(data: Message): Message[] {
+  console.log(data, typeof data == "string");
   const initialData = {
     id: messages.length + 1,
     createdAt: new Date().toISOString(),
@@ -48,5 +49,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;
     res.end(JSON.stringify(response));
-  }, 2000);
+  }, 1000);
 }
