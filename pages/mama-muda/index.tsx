@@ -2,12 +2,6 @@ import React, { useState } from "react";
 import {
   Box,
   Flex,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
   Text,
   FormControl,
   FormLabel,
@@ -15,16 +9,11 @@ import {
   FormErrorMessage,
   Button,
   Textarea,
-  Badge,
 } from "@chakra-ui/react";
 import Layout from "../../components/Layout";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import MamaTable from "./MamaTable";
 import { useForm } from "react-hook-form";
-
-export function formatDate(date: string | undefined) {
-  return new Date(date).toLocaleString("id-Id");
-}
 
 async function fetchMessage() {
   const URL = "http://localhost:3000/api/message";

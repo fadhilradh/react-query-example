@@ -1,5 +1,6 @@
 import { Badge, Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/react";
-import { formatDate, MessageProps } from ".";
+import { MessageProps } from ".";
+import { formatDate } from "../../utils/formats";
 
 type MamaTableProps = {
   data: MessageProps[];
