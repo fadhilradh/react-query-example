@@ -45,9 +45,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     //   break;
   }
 
-  setTimeout(() => {
-    res.setHeader("Content-Type", "application/json");
-    res.statusCode = 200;
-    res.end(JSON.stringify(response));
-  }, 1000);
+  res.setHeader("Content-Type", "application/json");
+  res.statusCode = 200;
+  res.end(JSON.stringify(response));
+  // res.statusCode = 400;
+  // res.end("Bad Request");
 }

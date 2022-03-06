@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Flex,
@@ -18,7 +18,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import Layout from "../../components/Layout";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import MamaTable from "./MamaTable";
 import { useForm } from "react-hook-form";
 
@@ -60,15 +60,59 @@ async function submitMsg(data: MessageProps) {
 }
 
 export default function MamaMuda() {
+  const queryClient = useQueryClient();
+  const [errorMsg, setErrorMsg] = useState("");
   const { data, isSuccess } = useQuery("getMamaMessage", fetchMessage, {
-    staleTime: 5000,
-    refetchInterval: 5000,
+    staleTime: 15000,
+    refetchInterval: 15000,
   });
 
   const mutation = useMutation(submitMsg, {
-    // onError,
-    // onMutate,
-    // onSettled,
+    onMutate: async (newMessage) => {
+      console.log("1");
+      // mutation in progress
+      // spinner , loading, disable form, etc
+
+      // optimistic update :
+      // 1. cancel any outgoing refetch, biar ga bentrok
+      await queryClient.cancelQueries("getMamaMessage");
+      console.log("2");
+
+      // 2. snapshot / save the previous value
+      const prevMessages =
+        queryClient.getQueryData<MessageProps[]>("getMamaMessage");
+      // 3. optimistically update new value in cache
+      if (prevMessages) {
+        console.log("inside prev");
+
+        newMessage = { ...newMessage, createdAt: new Date().toISOString() };
+        const finalMessages = [...prevMessages, newMessage];
+        queryClient.setQueryData("getMamaMessage", finalMessages);
+      }
+
+      return { prevMessages };
+    },
+    onSettled: async (data, error: any) => {
+      // after mutation done --> success or error
+      if (data) {
+        await queryClient.invalidateQueries("getMamaMessage");
+        setErrorMsg("");
+        reset();
+        clearErrors();
+      }
+
+      if (error) {
+        setErrorMsg(error.message);
+      }
+    },
+    onError: async () => {
+      // after mutation finish, for error
+      console.log("error");
+    },
+    onSuccess: async () => {
+      // after mutation finish, for success
+      console.log("success");
+    },
   });
 
   const { handleSubmit, errors, register, reset, clearErrors } = useForm();
